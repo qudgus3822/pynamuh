@@ -31,7 +31,27 @@ def get_parser_info(block_name: str) -> tuple[Type[Structure], Type["OutBlock"],
             from .ord.c8201 import CTc8201OutBlock1, Tc8201OutBlock1
             return (CTc8201OutBlock1, Tc8201OutBlock1, True)
         case "c8201":
-            return None    
+            return None
+        case "c8101OutBlock":
+            from .ord.c8101 import CTc8101OutBlock, Tc8101OutBlock
+            return (CTc8101OutBlock, Tc8101OutBlock, False)
+        case "c8101":
+            return None
+        case "c8102OutBlock":
+            from .ord.c8102 import CTc8102OutBlock, Tc8102OutBlock
+            return (CTc8102OutBlock, Tc8102OutBlock, False)
+        case "c8102":
+            return None
+        case "c8103OutBlock":
+            from .ord.c8103 import CTc8103OutBlock, Tc8103OutBlock
+            return (CTc8103OutBlock, Tc8103OutBlock, False)
+        case "c8103":
+            return None
+        case "c8104OutBlock":
+            from .ord.c8104 import CTc8104OutBlock, Tc8104OutBlock
+            return (CTc8104OutBlock, Tc8104OutBlock, False)
+        case "c8104":
+            return None
         case _:
             raise ValueError(f"아직 Block이 구현되지 않음! : {block_name}")
 
