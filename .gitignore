@@ -201,3 +201,6 @@ src/pynamuh/dll/SKCommIC.dll
 src/pynamuh/dll/wmca.dll
 src/pynamuh/dll/wmca.ini
 wmca_client.py
+
+src/pynamuh/dll/*
+.env
