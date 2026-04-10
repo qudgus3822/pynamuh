@@ -38,6 +38,9 @@ Documentation = "https://github.com/yourusername/pynamuh/blob/main/README.md"
 Repository = "https://github.com/yourusername/pynamuh"
 Issues = "https://github.com/yourusername/pynamuh/issues"
 
+[tool.uv.build-backend]
+include = ["src/pynamuh/dll/"]
+
 [tool.uv]
 package = true
 
