@@ -45,7 +45,7 @@ include = ["src/pynamuh/dll/"]
 package = true
 
 [tool.uv.sources]
-pynamuh = { workspace = true, editable = true }
+pynamuh = { workspace = true }
 
 [tool.uv.workspace]
 members = [
