@@ -21,6 +21,11 @@ class CTc8201InBlock(Structure):
         ("_pswd_noz44", ctypes.c_char * 1),      # 속성 바이트
         ("bnc_bse_cdz1", ctypes.c_char * 1),     # 잔고구분
         ("_bnc_bse_cdz1", ctypes.c_char * 1),    # 속성 바이트
+        # [변경: 2026-04-13 23:50, 김병현 수정] trio_ord.h 기준 누락 필드 추가
+        ("aet_bsez1", ctypes.c_char * 1),        # 자산기준 (1:순자산, 2:총자산)
+        ("_aet_bsez1", ctypes.c_char * 1),       # 속성 바이트
+        ("qut_dit_cdz3", ctypes.c_char * 3),     # 시세구분코드 (UNT:통합시세, KRX:KRX시세, NXT:NXT시세)
+        ("_qut_dit_cdz3", ctypes.c_char * 1),    # 속성 바이트
     ]
 
 
@@ -33,7 +38,9 @@ class Tc8201InBlock(InBlock):
 
     Attributes:
         pswd_noz44: 해시 처리된 계좌비밀번호 (44자)
-        bnc_bse_cdz1: 잔고구분 (1: 체결기준, 2: 결제잔고, 3: 시간외종가 체결잔고, 4: 시간외종가 결제잔고, 5: 주식잔고평가)
+        bnc_bse_cdz1: 잔고구분 (1: 체결잔고, 2: 결제잔고, 3: 시간외종가 체결잔고, 4: 시간외종가 결제잔고)
+        aet_bsez1: 자산기준 (1: 순자산, 2: 총자산)
+        qut_dit_cdz3: 시세구분코드 (UNT: 통합시세, KRX: KRX시세, NXT: NXT시세)
 
     사용 예:
         >>> from api.wmca_agent import WMCAAgent
@@ -52,7 +59,7 @@ class Tc8201InBlock(InBlock):
         >>> # 2. InputBlock 생성
         >>> input_data = C8201Input(
         ...     pswd_noz44=hash_pwd,  # 44자 해시값
-        ...     bnc_bse_cdz1=1  # 1: 체결기준 (int → str 자동 변환)
+        ...     bnc_bse_cdz1=1  # 1: 체결잔고 (int → str 자동 변환)
         ... )
         >>>
         >>> # 3. TR 조회
@@ -71,8 +78,21 @@ class Tc8201InBlock(InBlock):
     )
 
     bnc_bse_cdz1: str = Field(
-        pattern=r'^[1-5]$',
-        description="잔고구분 (1~5)"
+        pattern=r'^[1-4]$',
+        description="잔고구분 (1~4)"
+    )
+
+    # [변경: 2026-04-13 23:50, 김병현 수정] trio_ord.h 기준 누락 필드 추가
+    aet_bsez1: str = Field(
+        default="1",
+        pattern=r'^[12]$',
+        description="자산기준 (1:순자산, 2:총자산)"
+    )
+
+    qut_dit_cdz3: str = Field(
+        default="UNT",
+        pattern=r'^(UNT|KRX|NXT)$',
+        description="시세구분코드 (UNT:통합시세, KRX:KRX시세, NXT:NXT시세)"
     )
 
 
@@ -143,6 +163,11 @@ class CTc8201OutBlock(ctypes.Structure):
         ("_tot_eal_plsz18", ctypes.c_char * 1),
         ("pft_rtz15", ctypes.c_char * 15),          # 수익율
         ("_pft_rtz15", ctypes.c_char * 1),
+        # [변경: 2026-04-13 23:50, 김병현 수정] trio_ord.h 기준 누락 필드 추가
+        ("nas_tot_amtz18", ctypes.c_char * 18),     # 순총자산금액
+        ("_nas_tot_amtz18", ctypes.c_char * 1),
+        ("nas_tot_txtz8", ctypes.c_char * 8),       # 순총자산타이틀
+        ("_nas_tot_txtz8", ctypes.c_char * 1),
     ]
 
 
@@ -176,6 +201,9 @@ class Tc8201OutBlock(OutBlock):
     asset_tot_amtz16: str       # 순자산액
     tot_eal_plsz18: str         # 총평가손익
     pft_rtz15: str              # 수익율
+    # [변경: 2026-04-13 23:50, 김병현 수정] trio_ord.h 기준 누락 필드 추가
+    nas_tot_amtz18: str         # 순총자산금액
+    nas_tot_txtz8: str          # 순총자산타이틀
 
 
 class CTc8201OutBlock1(ctypes.Structure):
