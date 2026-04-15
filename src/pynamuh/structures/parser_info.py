@@ -52,6 +52,18 @@ def get_parser_info(block_name: str) -> tuple[Type[Structure], Type["OutBlock"],
             return (CTc8104OutBlock, Tc8104OutBlock, False)
         case "c8104":
             return None
+        # [변경: 2026-04-15 00:00, 김병현 수정] s8180 주문/체결 조회 파서 등록
+        case "s8180OutBlock":
+            from .ord.s8180 import CTs8180OutBlock, Ts8180OutBlock
+            return (CTs8180OutBlock, Ts8180OutBlock, False)
+        case "s8180OutBlock1":
+            from .ord.s8180 import CTs8180OutBlock1, Ts8180OutBlock1
+            return (CTs8180OutBlock1, Ts8180OutBlock1, True)
+        case "s8180OutBlock2":
+            from .ord.s8180 import CTs8180OutBlock2, Ts8180OutBlock2
+            return (CTs8180OutBlock2, Ts8180OutBlock2, False)
+        case "s8180":
+            return None
         case _:
             raise ValueError(f"아직 Block이 구현되지 않음! : {block_name}")
 
