@@ -391,7 +391,8 @@ class Received:
             try:
                 parser_info = get_parser_info(block_name)
             except ValueError:
-                logger.debug("파서 미등록: %s, bytes로 반환. nLen=%d, szData=%s", block_name, nLen, data_bytes)
+                # [변경: 2026-04-16 15:54, 김병현 수정] 파서 미등록 시 warning 레벨로 변경하여 원인 추적 용이하게
+                logger.warning("파서 미등록: %s, bytes로 반환. nLen=%d, szData=%s", block_name, nLen, data_bytes)
                 parser_info = None
 
         if not parser_info:
