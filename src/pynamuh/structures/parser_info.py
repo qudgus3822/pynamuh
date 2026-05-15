@@ -64,6 +64,18 @@ def get_parser_info(block_name: str) -> tuple[Type[Structure], Type["OutBlock"],
             return (CTs8180OutBlock2, Ts8180OutBlock2, False)
         case "s8180":
             return None
+        # [변경: 2026-05-15 00:00, 김병현 수정] IVWUTKMST04 주식 현재가 조회 파서 등록
+        case "IVWUTKMST04Out1":
+            from .inv.ivwutkmst04 import CTIVWUTKMST04OutBlock1, TIVWUTKMST04OutBlock1
+            return (CTIVWUTKMST04OutBlock1, TIVWUTKMST04OutBlock1, False)
+        case "IVWUTKMST04Out2":
+            from .inv.ivwutkmst04 import CTIVWUTKMST04OutBlock2, TIVWUTKMST04OutBlock2
+            return (CTIVWUTKMST04OutBlock2, TIVWUTKMST04OutBlock2, True)
+        case "IVWUTKMST04Out3":
+            from .inv.ivwutkmst04 import CTIVWUTKMST04OutBlock3, TIVWUTKMST04OutBlock3
+            return (CTIVWUTKMST04OutBlock3, TIVWUTKMST04OutBlock3, False)
+        case "IVWUTKMST04":
+            return None
         case _:
             raise ValueError(f"아직 Block이 구현되지 않음! : {block_name}")
 
