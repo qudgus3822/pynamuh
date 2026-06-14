@@ -31,7 +31,51 @@ def get_parser_info(block_name: str) -> tuple[Type[Structure], Type["OutBlock"],
             from .ord.c8201 import CTc8201OutBlock1, Tc8201OutBlock1
             return (CTc8201OutBlock1, Tc8201OutBlock1, True)
         case "c8201":
-            return None    
+            return None
+        case "c8101OutBlock":
+            from .ord.c8101 import CTc8101OutBlock, Tc8101OutBlock
+            return (CTc8101OutBlock, Tc8101OutBlock, False)
+        case "c8101":
+            return None
+        case "c8102OutBlock":
+            from .ord.c8102 import CTc8102OutBlock, Tc8102OutBlock
+            return (CTc8102OutBlock, Tc8102OutBlock, False)
+        case "c8102":
+            return None
+        case "c8103OutBlock":
+            from .ord.c8103 import CTc8103OutBlock, Tc8103OutBlock
+            return (CTc8103OutBlock, Tc8103OutBlock, False)
+        case "c8103":
+            return None
+        case "c8104OutBlock":
+            from .ord.c8104 import CTc8104OutBlock, Tc8104OutBlock
+            return (CTc8104OutBlock, Tc8104OutBlock, False)
+        case "c8104":
+            return None
+        # [변경: 2026-04-15 00:00, 김병현 수정] s8180 주문/체결 조회 파서 등록
+        case "s8180OutBlock":
+            from .ord.s8180 import CTs8180OutBlock, Ts8180OutBlock
+            return (CTs8180OutBlock, Ts8180OutBlock, False)
+        case "s8180OutBlock1":
+            from .ord.s8180 import CTs8180OutBlock1, Ts8180OutBlock1
+            return (CTs8180OutBlock1, Ts8180OutBlock1, True)
+        case "s8180OutBlock2":
+            from .ord.s8180 import CTs8180OutBlock2, Ts8180OutBlock2
+            return (CTs8180OutBlock2, Ts8180OutBlock2, False)
+        case "s8180":
+            return None
+        # [변경: 2026-05-15 00:00, 김병현 수정] IVWUTKMST04 주식 현재가 조회 파서 등록
+        case "IVWUTKMST04Out1":
+            from .inv.ivwutkmst04 import CTIVWUTKMST04OutBlock1, TIVWUTKMST04OutBlock1
+            return (CTIVWUTKMST04OutBlock1, TIVWUTKMST04OutBlock1, False)
+        case "IVWUTKMST04Out2":
+            from .inv.ivwutkmst04 import CTIVWUTKMST04OutBlock2, TIVWUTKMST04OutBlock2
+            return (CTIVWUTKMST04OutBlock2, TIVWUTKMST04OutBlock2, True)
+        case "IVWUTKMST04Out3":
+            from .inv.ivwutkmst04 import CTIVWUTKMST04OutBlock3, TIVWUTKMST04OutBlock3
+            return (CTIVWUTKMST04OutBlock3, TIVWUTKMST04OutBlock3, False)
+        case "IVWUTKMST04":
+            return None
         case _:
             raise ValueError(f"아직 Block이 구현되지 않음! : {block_name}")
 

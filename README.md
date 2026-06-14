@@ -184,8 +184,8 @@ with WMCAAgent() as agent:
         if msg_type == WMCAMessage.CA_CONNECTED:
             print("로그인 성공!")
             print(f"사용자 ID: {data.pLoginInfo.szUserID}")
-            print(f"계좌 수: {data.pLoginInfo.account_count}")
-            for i, account in enumerate(data.pLoginInfo.accounts, 1):
+            print(f"계좌 수: {data.pLoginInfo.szAccountCount}")
+            for i, account in enumerate(data.pLoginInfo.accountlist, 1):
                 print(f"  계좌 {i}: {account.szAccountNo} ({account.szAccountName})")
             break
         elif msg_type == WMCAMessage.CA_DISCONNECTED:
@@ -260,7 +260,7 @@ with WMCAAgent() as agent:
     )
 
     # 입력 데이터 생성
-    input_data = C8201Input(
+    input_data = Tc8201InBlock(
         pswd_noz44=password_hash,  # 44자 해시
         bnc_bse_cdz1="1"            # 잔고 구분 (1: 전체)
     )
@@ -294,8 +294,9 @@ with WMCAAgent() as agent:
         if block.szBlockName == "c8201OutBlock":
             print(f"예수금: {block.szData.dpsit_amtz16}")
         elif block.szBlockName == "c8201OutBlock1":
-            print(f"종목: {block.szData.issue_codez6}")
-            print(f"보유수량: {block.szData.hldg_qtyz10}")
+            for item in block.szData:  # 반복 블록 (리스트)
+                print(f"종목: {item.issue_codez6} {item.issue_namez40}")
+                print(f"잔고수량: {item.bal_qtyz16}")
 ```
 
 **예제 2: 여러 TR 동시 요청**
@@ -350,7 +351,7 @@ hash_pwd = agent.get_account_hash_password(
 print(len(hash_pwd))  # 44
 
 # InBlock에 설정
-input_data = C8201Input(
+input_data = Tc8201InBlock(
     pswd_noz44=hash_pwd,  # 44자 해시
     bnc_bse_cdz1="1"
 )
@@ -397,9 +398,9 @@ with WMCAAgent() as agent:
     for msg_type, data in agent.receive_events():
         if msg_type == WMCAMessage.CA_RECEIVESISE:
             if data.pData.szBlockName == "j8OutBlock":
-                print(f"종목: {data.pData.szData.issue_codez6}")
-                print(f"현재가: {data.pData.szData.cur_prcz8}")
-                print(f"체결량: {data.pData.szData.cntg_qtyz10}")
+                print(f"종목: {data.pData.szData.code}")
+                print(f"현재가: {data.pData.szData.price}")
+                print(f"거래량: {data.pData.szData.volume}")
 ```
 
 **예제 2: 여러 종목 등록**
@@ -519,7 +520,7 @@ for msg_type, data in agent.receive_events(timeout=10.0):
 
 ```python
 from pynamuh import WMCAAgent, WMCAMessage
-from pynamuh.structures.ord import C8201Input
+from pynamuh.structures.ord.c8201 import Tc8201InBlock
 
 with WMCAAgent() as agent:
     # 1. 로그인
@@ -543,7 +544,7 @@ with WMCAAgent() as agent:
 
     # 2. 잔고 조회
     password_hash = agent.get_account_hash_password(1, "1234")
-    input_data = C8201Input(
+    input_data = Tc8201InBlock(
         pswd_noz44=password_hash,
         bnc_bse_cdz1="1"
     )
@@ -586,7 +587,7 @@ with WMCAAgent() as agent:
     for msg_type, data in agent.receive_events():
         if msg_type == WMCAMessage.CA_RECEIVESISE:
             if data.pData.szBlockName == "j8OutBlock":
-                print(f"현재가: {data.pData.szData.cur_prcz8}")
+                print(f"현재가: {data.pData.szData.price}")
 
         # 1분 경과 시 종료
         if time.time() - start_time > 60:

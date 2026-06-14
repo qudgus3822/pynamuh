@@ -391,7 +391,8 @@ class Received:
             try:
                 parser_info = get_parser_info(block_name)
             except ValueError:
-                logger.debug("파서 미등록: %s, bytes로 반환. nLen=%d, szData=%s", block_name, nLen, data_bytes)
+                # [변경: 2026-04-16 15:54, 김병현 수정] 파서 미등록 시 warning 레벨로 변경하여 원인 추적 용이하게
+                logger.warning("파서 미등록: %s, bytes로 반환. nLen=%d, szData=%s", block_name, nLen, data_bytes)
                 parser_info = None
 
         if not parser_info:
@@ -613,7 +614,7 @@ class InBlock(BaseModel, ABC):
 
         # Pydantic v3 호환: model_dump() 사용
         for field_name, value in self.model_dump().items():
-            # str → bytes (cp949 인코딩) → C 구조체 필드에 할당
+            # str → bytes (cp949 인코딩)
             if isinstance(value, str):
                 encoded_value = value.encode('cp949')
             elif isinstance(value, int):
@@ -623,6 +624,13 @@ class InBlock(BaseModel, ABC):
             else:
                 encoded_value = str(value).encode('cp949')
 
-            setattr(struct, field_name, encoded_value)
+            # memmove로 실제 값만 복사하여 나머지 0x20 패딩 유지
+            # (setattr은 남은 영역을 0x00으로 채워 서버 오류 발생)
+            field_descriptor = getattr(type(struct), field_name)
+            ctypes.memmove(
+                ctypes.addressof(struct) + field_descriptor.offset,
+                encoded_value,
+                min(len(encoded_value), field_descriptor.size),
+            )
 
         return struct

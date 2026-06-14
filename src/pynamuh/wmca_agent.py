@@ -146,6 +146,7 @@ class WMCAAgent:
         self.wmca_attach = None
         self.wmca_detach = None
         self.wmca_set_account_index_pwd = None
+        self.wmca_set_order_pwd = None
 
     def _load_dll(self):
         """DLL 로드 및 함수 포인터 설정
@@ -182,6 +183,7 @@ class WMCAAgent:
             self.wmca_attach = self.dll.wmcaAttach
             self.wmca_detach = self.dll.wmcaDetach
             self.wmca_set_account_index_pwd = self.dll.wmcaSetAccountIndexPwd
+            self.wmca_set_order_pwd = self.dll.wmcaSetOrderPwd
 
             # ================================================================
             # 2. 함수 시그니처 설정 (WmcaIntf.h typedef 기준)
@@ -234,6 +236,10 @@ class WMCAAgent:
             # BOOL wmcaSetAccountIndexPwd(const char* pszHashOut, int nAccountIndex, const char* pszPassword)
             self.wmca_set_account_index_pwd.argtypes = [c_char_p, c_int, c_char_p]
             self.wmca_set_account_index_pwd.restype = ctypes.c_bool
+
+            # BOOL wmcaSetOrderPwd(const char* pszHashOut, const char* pszPassword)
+            self.wmca_set_order_pwd.argtypes = [c_char_p, c_char_p]
+            self.wmca_set_order_pwd.restype = ctypes.c_bool
 
             logger.debug("모든 DLL 함수 시그니처 설정 완료")
         except AttributeError as e:
@@ -515,6 +521,35 @@ class WMCAAgent:
         hash_str = hash_buffer.value.decode("cp949")
 
         # 길이 검증
+        if len(hash_str) != 44:
+            raise ValueError(
+                f"예상치 못한 해시 길이: {len(hash_str)}자 (예상: 44자)\n" f"해시값: '{hash_str}'"
+            )
+
+        return hash_str
+
+    def get_order_hash_password(self, password: str) -> str:
+        """거래(주문) 비밀번호를 44자 해시값으로 변환 (wmcaSetOrderPwd)
+
+        계좌 비밀번호와는 별개인 거래 비밀번호를 해시합니다.
+        주문 TR(c8101, c8102 등)의 trad_pswd_no_1/2 필드에 사용합니다.
+
+        Args:
+            password: 거래 비밀번호 (평문)
+
+        Returns:
+            str: 44자 해시 문자열
+        """
+        hash_buffer = ctypes.create_string_buffer(44)
+        password_bytes = password.encode("cp949")
+
+        result = self.wmca_set_order_pwd(hash_buffer, password_bytes)
+
+        if not result:
+            raise RuntimeError("거래 비밀번호 해시 생성 실패")
+
+        hash_str = hash_buffer.value.decode("cp949")
+
         if len(hash_str) != 44:
             raise ValueError(
                 f"예상치 못한 해시 길이: {len(hash_str)}자 (예상: 44자)\n" f"해시값: '{hash_str}'"

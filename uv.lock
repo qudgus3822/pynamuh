@@ -209,6 +209,7 @@ source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "pywin32" },
 ]
 
@@ -224,6 +225,7 @@ dev = [
 requires-dist = [
     { name = "pydantic", specifier = ">=2.11.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "pywin32", specifier = ">=311" },
 ]
 
