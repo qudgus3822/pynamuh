@@ -405,16 +405,32 @@ class Received:
 
         struct_class, model_class, is_array = parser_info
 
-        if is_array:
-            # 반복 레코드 파싱
-            parsed_data = cls._parse_array_internal(
-                data_bytes, nLen, struct_class, model_class
+        # [변경: 2026-07-31 14:20, 김병현 수정] 파싱 예외를 여기서 잡아 bytes로 되돌린다.
+        #
+        # 예전엔 여기서 난 예외가 그대로 위로 올라갔다. 그 위는 윈도우 프로시저(_wnd_proc)이고
+        # 거기서 `except Exception: logger.error(...)`로 삼켜진다. 그러면 이 블록은 큐에 들어가지
+        # 못하고 **통째로 증발**한다 — 호출부는 "그런 데이터는 원래 없었다"와 구분할 방법이 없다.
+        # 조회 결과가 소리 없이 일부만 오는 최악의 실패 모드였다.
+        #
+        # bytes로 되돌려주면 최소한 블록 자체는 호출부까지 도착하고, 호출부의 기존 방어
+        # (`isinstance(block.szData, bytes)` → WARNING)가 눈에 보이는 흔적을 남긴다.
+        try:
+            if is_array:
+                # 반복 레코드 파싱
+                parsed_data = cls._parse_array_internal(
+                    data_bytes, nLen, struct_class, model_class
+                )
+            else:
+                # 단일 레코드 파싱
+                parsed_data = cls._parse_single_internal(
+                    data_bytes, struct_class, model_class
+                )
+        except Exception as e:
+            logger.error(
+                "블록 파싱 실패 → bytes로 반환: block=%s struct=%s nLen=%d err=%s",
+                block_name, struct_class.__name__, nLen, e, exc_info=True,
             )
-        else:
-            # 단일 레코드 파싱
-            parsed_data = cls._parse_single_internal(
-                data_bytes, struct_class, model_class
-            )
+            return cls(szBlockName=block_name, szData=data_bytes, nLen=nLen)
         logger.debug("Received _auto_parse 완료. type(szData)=%s", type(parsed_data).__name__)
 
         return cls(
@@ -492,6 +508,21 @@ class Received:
             logger.warning(f"반복 레코드 없음 (nLen={nLen} < struct_size={struct_size})")
             return []
 
+        # [변경: 2026-07-31 14:20, 김병현 수정] 레코드 경계가 안 맞으면 크게 경고한다.
+        #
+        # nLen이 struct_size의 배수가 아니라는 건 "우리 구조체 정의가 서버가 보내는 레코드
+        # 길이와 다르다"는 뜻이다. 이때 벌어지는 일이 고약하다 — 나눗셈이 내림이라 뒤쪽 행이
+        # 조용히 잘려나가고, 남은 행들도 한 칸씩 밀려 읽혀 전부 쓰레기가 된다. 쓰레기 행은
+        # 상위 필터(종목코드 없음/수량 0 등)에 걸려 자연스럽게 사라지므로, 겉으로는 그냥
+        # "일부만 조회됐다"로 보인다. 원인을 짚을 단서가 이 한 줄뿐이라 반드시 남긴다.
+        remainder = nLen % struct_size
+        if remainder:
+            logger.error(
+                "레코드 경계 불일치! struct=%s struct_size=%d nLen=%d "
+                "(나머지 %dB, %d행만 파싱 — 구조체 정의가 서버 스펙과 다를 수 있음)",
+                struct_class.__name__, struct_size, nLen, remainder, occurs_count,
+            )
+
         # 배열 파싱
         parsed_list = []
         offset = 0
@@ -499,11 +530,20 @@ class Received:
         for i in range(occurs_count):
             # bytes 슬라이스 → Structure
             record_bytes = data_bytes[offset:offset + struct_size]
-            c_struct = struct_class.from_buffer_copy(record_bytes)
+            # [변경: 2026-07-31 14:20, 김병현 수정] 행 단위로 감싼다.
+            # 예전엔 한 행에서 예외가 나면 그 블록 전체(최대 15행)가 함께 날아갔다.
+            # 한 행이 깨졌다고 멀쩡한 나머지 행까지 버릴 이유는 없다.
+            try:
+                c_struct = struct_class.from_buffer_copy(record_bytes)
 
-            # Structure → OutBlock (OutBlock.from_c_struct 공통 메서드 사용)
-            parsed_model = model_class.from_c_struct(c_struct)
-            parsed_list.append(parsed_model)
+                # Structure → OutBlock (OutBlock.from_c_struct 공통 메서드 사용)
+                parsed_model = model_class.from_c_struct(c_struct)
+                parsed_list.append(parsed_model)
+            except Exception as e:
+                logger.error(
+                    "반복 레코드 %d/%d 파싱 실패 (이 행만 건너뜀): struct=%s err=%s",
+                    i + 1, occurs_count, struct_class.__name__, e, exc_info=True,
+                )
 
             offset += struct_size
 

@@ -287,7 +287,15 @@ class WMCAAgent:
                 # WMCA 이벤트 처리로 위임
                 self._handle_wmca_event(wparam, lparam)
             except Exception as e:
-                logger.error(f"메시지 처리 오류: {e}", exc_info=True)
+                # [변경: 2026-07-31 14:20, 김병현 수정] 이 except가 무슨 뜻인지 로그에 명시한다.
+                # 윈도우 프로시저는 절대 예외를 밖으로 내보내면 안 되므로(콜백이 죽는다) 삼키는
+                # 것 자체는 맞다. 문제는 삼킨 결과다 — 이 이벤트는 큐에 들어가지 못하고 사라지고,
+                # 조회하던 쪽은 "원래 데이터가 없었다"와 구분할 수 없다. 즉 이 줄이 찍혔다면
+                # **응답 일부가 유실된 것**이다. 그래서 원인(wparam)까지 같이 남긴다.
+                logger.error(
+                    "메시지 처리 오류 → 이 이벤트는 큐에 들어가지 못하고 유실됨! "
+                    "(wparam=%s) %s", wparam, e, exc_info=True,
+                )
 
             return 0
 
